@@ -1,0 +1,143 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MetodoPago {
+  EFECTIVO
+  DEBITO
+  CREDITO
+  TRANSFERENCIA
+}
+
+enum EstadoVenta {
+  COMPLETADA
+  ANULADA
+}
+
+enum TipoMovimientoStock {
+  VENTA
+  INGRESO
+  AJUSTE
+  ANULACION
+}
+
+model Especie {
+  id        String   @id @default(cuid())
+  nombre    String   @unique
+  codigo    String   @unique
+  color     String?
+  orden     Int      @default(0)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  productos    Producto[]
+  ventaItems   VentaItem[]
+
+  @@map("especies")
+}
+
+model Categoria {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  codigo      String   @unique
+  descripcion String?
+  orden       Int      @default(0)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  productos  Producto[]
+  ventaItems VentaItem[]
+
+  @@map("categorias")
+}
+
+model Producto {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  nombre      String
+  especieId   String
+  categoriaId String
+  precio      Int
+  stock       Int
+  stockMinimo Int      @default(5)
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  especie   Especie @relation(fields: [especieId], references: [id])
+  categoria Categoria @relation(fields: [categoriaId], references: [id])
+
+  ventaItems       VentaItem[]
+  movimientosStock MovimientoStock[]
+
+  @@index([sku])
+  @@index([especieId])
+  @@index([categoriaId])
+  @@map("productos")
+}
+
+model Venta {
+  id           String      @id @default(cuid())
+  numeroVenta  Int         @unique @default(autoincrement())
+  total        Int
+  metodoPago   MetodoPago
+  estado       EstadoVenta @default(COMPLETADA)
+  createdAt    DateTime    @default(now())
+
+  items VentaItem[]
+
+  @@index([createdAt])
+  @@map("ventas")
+}
+
+model VentaItem {
+  id     String @id @default(cuid())
+  ventaId String
+
+  productoId String
+
+  skuSnapshot            String
+  nombreSnapshot         String
+  especieNombreSnapshot  String
+  categoriaNombreSnapshot String
+
+  especieId   String
+  categoriaId String
+
+  precioUnitario Int
+  cantidad       Int
+  subtotal       Int
+
+  venta     Venta     @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  producto  Producto  @relation(fields: [productoId], references: [id])
+  especie   Especie   @relation(fields: [especieId], references: [id])
+  categoria Categoria @relation(fields: [categoriaId], references: [id])
+
+  @@index([ventaId])
+  @@index([productoId])
+  @@map("venta_items")
+}
+
+model MovimientoStock {
+  id              String              @id @default(cuid())
+  productoId      String
+  tipo            TipoMovimientoStock
+  cantidad        Int
+  stockResultante Int
+  referenciaId    String?
+  motivo          String?
+  createdAt       DateTime            @default(now())
+
+  producto Producto @relation(fields: [productoId], references: [id])
+
+  @@index([productoId])
+  @@map("movimientos_stock")
+}
