@@ -28,7 +28,11 @@ export class CreateProductoDto {
 
   @IsInt()
   @Min(1)
-  precio!: number;
+  valorNeto!: number;
+
+  @IsInt()
+  @Min(0)
+  valorComision!: number;
 
   @IsInt()
   @Min(0)

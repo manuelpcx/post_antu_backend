@@ -106,7 +106,9 @@ export class ProductosService {
           nombre: dto.nombre,
           especieId: dto.especieId,
           categoriaId: dto.categoriaId,
-          precio: dto.precio,
+          valorNeto: dto.valorNeto,
+          valorComision: dto.valorComision,
+          precio: dto.valorNeto + dto.valorComision,
           stock: dto.stock,
           stockMinimo: dto.stockMinimo ?? 5,
           activo: dto.activo ?? true,
@@ -119,7 +121,7 @@ export class ProductosService {
   }
 
   async update(id: string, dto: UpdateProductoDto) {
-    await this.findOneOrThrow(id);
+    const existing = await this.findOneOrThrow(id);
 
     if (dto.especieId) {
       const especie = await this.prisma.especie.findUnique({
@@ -138,6 +140,10 @@ export class ProductosService {
       }
     }
 
+    const precioCambiado = dto.valorNeto !== undefined || dto.valorComision !== undefined;
+    const valorNeto = dto.valorNeto ?? existing.valorNeto;
+    const valorComision = dto.valorComision ?? existing.valorComision;
+
     try {
       return await this.prisma.producto.update({
         where: { id },
@@ -146,7 +152,9 @@ export class ProductosService {
           nombre: dto.nombre,
           especieId: dto.especieId,
           categoriaId: dto.categoriaId,
-          precio: dto.precio,
+          valorNeto: dto.valorNeto,
+          valorComision: dto.valorComision,
+          precio: precioCambiado ? valorNeto + valorComision : undefined,
           stock: dto.stock,
           stockMinimo: dto.stockMinimo,
           activo: dto.activo,
