@@ -32,3 +32,8 @@ pnpm-debug.log*
 .env
 .env.local
 .env.test
+
+# pnpm's local build-approval config (Windows-only workaround; breaks
+# Railway's pnpm 9.x build by making it require a `packages:` workspace
+# field). Approve locally with `pnpm approve-builds --all` instead.
+pnpm-workspace.yaml
