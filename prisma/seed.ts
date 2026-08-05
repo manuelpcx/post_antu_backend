@@ -78,12 +78,18 @@ async function main() {
       throw new Error(`Especie o categoría no encontrada para el producto ${producto.sku}`);
     }
 
+    // Dato de ejemplo: 15% del precio como comisión, el resto es valor neto.
+    const valorComision = Math.round(producto.precio * 0.15);
+    const valorNeto = producto.precio - valorComision;
+
     await prisma.producto.upsert({
       where: { sku: producto.sku },
       update: {
         nombre: producto.nombre,
         especieId,
         categoriaId,
+        valorNeto,
+        valorComision,
         precio: producto.precio,
         stock: producto.stock,
         stockMinimo: producto.stockMinimo ?? 5,
@@ -93,6 +99,8 @@ async function main() {
         nombre: producto.nombre,
         especieId,
         categoriaId,
+        valorNeto,
+        valorComision,
         precio: producto.precio,
         stock: producto.stock,
         stockMinimo: producto.stockMinimo ?? 5,

@@ -51,6 +51,8 @@ describe('Ventas (e2e)', () => {
         nombre: 'Producto de prueba',
         especieId: especie.id,
         categoriaId: categoria.id,
+        valorNeto: 700,
+        valorComision: 300,
         precio: 1000,
         stock: 10,
       },
@@ -85,6 +87,8 @@ describe('Ventas (e2e)', () => {
     expect(response.body.total).toBe(3000);
     expect(response.body.items[0].precioUnitario).toBe(1000);
     expect(response.body.items[0].subtotal).toBe(3000);
+    expect(response.body.items[0].netoUnitario).toBe(700);
+    expect(response.body.items[0].comisionUnitario).toBe(300);
 
     const producto = await prisma.producto.findUniqueOrThrow({
       where: { id: productoId },
