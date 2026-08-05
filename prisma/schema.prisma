@@ -60,17 +60,19 @@ model Categoria {
 }
 
 model Producto {
-  id          String   @id @default(cuid())
-  sku         String   @unique
-  nombre      String
-  especieId   String
-  categoriaId String
-  precio      Int
-  stock       Int
-  stockMinimo Int      @default(5)
-  activo      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  sku           String   @unique
+  nombre        String
+  especieId     String
+  categoriaId   String
+  valorNeto     Int
+  valorComision Int      @default(0)
+  precio        Int
+  stock         Int
+  stockMinimo   Int      @default(5)
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   especie   Especie @relation(fields: [especieId], references: [id])
   categoria Categoria @relation(fields: [categoriaId], references: [id])
@@ -112,9 +114,11 @@ model VentaItem {
   especieId   String
   categoriaId String
 
-  precioUnitario Int
-  cantidad       Int
-  subtotal       Int
+  precioUnitario    Int
+  netoUnitario      Int
+  comisionUnitario  Int @default(0)
+  cantidad          Int
+  subtotal          Int
 
   venta     Venta     @relation(fields: [ventaId], references: [id], onDelete: Cascade)
   producto  Producto  @relation(fields: [productoId], references: [id])
