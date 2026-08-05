@@ -34,6 +34,8 @@ export class VentasService {
         especieId: string;
         categoriaId: string;
         precioUnitario: number;
+        netoUnitario: number;
+        comisionUnitario: number;
         cantidad: number;
         subtotal: number;
       }[] = [];
@@ -63,6 +65,8 @@ export class VentasService {
           especieId: producto.especieId,
           categoriaId: producto.categoriaId,
           precioUnitario: producto.precio,
+          netoUnitario: producto.valorNeto,
+          comisionUnitario: producto.valorComision,
           cantidad: item.cantidad,
           subtotal,
         });
@@ -130,6 +134,17 @@ export class VentasService {
       (sum, v) => sum + v.items.reduce((s, i) => s + i.cantidad, 0),
       0,
     );
+    const ventaNetaTotal = ventas.reduce(
+      (sum, v) =>
+        sum + v.items.reduce((s, i) => s + i.netoUnitario * i.cantidad, 0),
+      0,
+    );
+    const ventaComisionTotal = ventas.reduce(
+      (sum, v) =>
+        sum +
+        v.items.reduce((s, i) => s + i.comisionUnitario * i.cantidad, 0),
+      0,
+    );
 
     const metodoPagoMap = new Map<
       string,
@@ -195,6 +210,8 @@ export class VentasService {
       cantidadVentas,
       ticketPromedio,
       unidadesVendidas,
+      ventaNetaTotal,
+      ventaComisionTotal,
       porMetodoPago,
       porEspecie,
       topProductos,

@@ -15,6 +15,8 @@ describe('VentasService', () => {
     especieId: 'esp-1',
     categoriaId: 'cat-1',
     precio: 1000,
+    valorNeto: 700,
+    valorComision: 300,
     stock: 10,
     activo: true,
     especie: { nombre: 'Perro' },
@@ -44,6 +46,8 @@ describe('VentasService', () => {
       $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
         callback(tx),
       ),
+      venta: { findMany: jest.fn() },
+      especie: { findMany: jest.fn() },
     };
 
     const module = await Test.createTestingModule({
@@ -54,9 +58,9 @@ describe('VentasService', () => {
   });
 
   describe('crear', () => {
-    it('calcula el total sumando precio × cantidad de cada ítem', async () => {
-      const p1 = producto({ id: 'p1', precio: 1000 });
-      const p2 = producto({ id: 'p2', precio: 2500 });
+    it('calcula el total sumando precio × cantidad de cada ítem, y snapshotea neto/comisión', async () => {
+      const p1 = producto({ id: 'p1', precio: 1000, valorNeto: 700, valorComision: 300 });
+      const p2 = producto({ id: 'p2', precio: 2500, valorNeto: 2000, valorComision: 500 });
       tx.producto.findMany.mockResolvedValue([p1, p2]);
       tx.venta.create.mockImplementation(({ data }: any) =>
         Promise.resolve({
@@ -85,6 +89,10 @@ describe('VentasService', () => {
 
       expect(result.total).toBe(1000 * 2 + 2500 * 1);
       expect(tx.movimientoStock.create).toHaveBeenCalledTimes(2);
+      expect(result.items[0].netoUnitario).toBe(700);
+      expect(result.items[0].comisionUnitario).toBe(300);
+      expect(result.items[1].netoUnitario).toBe(2000);
+      expect(result.items[1].comisionUnitario).toBe(500);
     });
 
     it('rechaza con BadRequestException cuando el stock es insuficiente, sin registrar movimientos', async () => {
@@ -135,6 +143,50 @@ describe('VentasService', () => {
           metodoPago: 'EFECTIVO',
         } as any),
       ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  describe('resumen', () => {
+    it('suma ventaNetaTotal y ventaComisionTotal desde los snapshots de cada item', async () => {
+      prisma.venta.findMany.mockResolvedValue([
+        {
+          id: 'v1',
+          total: 3000,
+          metodoPago: 'EFECTIVO',
+          items: [
+            {
+              especieId: 'esp-1',
+              productoId: 'p1',
+              skuSnapshot: 'SKU-1',
+              nombreSnapshot: 'Producto 1',
+              precioUnitario: 1000,
+              netoUnitario: 700,
+              comisionUnitario: 300,
+              cantidad: 2,
+              subtotal: 2000,
+            },
+            {
+              especieId: 'esp-1',
+              productoId: 'p2',
+              skuSnapshot: 'SKU-2',
+              nombreSnapshot: 'Producto 2',
+              precioUnitario: 1000,
+              netoUnitario: 800,
+              comisionUnitario: 200,
+              cantidad: 1,
+              subtotal: 1000,
+            },
+          ],
+        },
+      ]);
+      prisma.especie.findMany.mockResolvedValue([
+        { id: 'esp-1', nombre: 'Perro', color: '#fff' },
+      ]);
+
+      const result = await service.resumen('2026-08-05');
+
+      expect(result.ventaNetaTotal).toBe(700 * 2 + 800 * 1);
+      expect(result.ventaComisionTotal).toBe(300 * 2 + 200 * 1);
     });
   });
 
