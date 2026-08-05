@@ -30,6 +30,11 @@ export class CreateProductoDto {
   @Min(1)
   valorNeto!: number;
 
+  // Required (not optional) deliberately: ProductosService.create() computes
+  // precio as dto.valorNeto + dto.valorComision, which would be NaN if this
+  // were undefined. The Prisma schema's `@default(0)` on valorComision is
+  // unrelated to this API contract — it only exists to support the backfill
+  // migration for rows that pre-date this column.
   @IsInt()
   @Min(0)
   valorComision!: number;
