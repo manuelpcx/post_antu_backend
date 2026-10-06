@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -45,5 +46,10 @@ export class ProductosController {
   @Patch(':id/stock')
   updateStock(@Param('id') id: string, @Body() dto: UpdateStockDto) {
     return this.productosService.updateStock(id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.productosService.remove(id);
   }
 }

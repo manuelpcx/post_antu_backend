@@ -198,6 +198,29 @@ export class ProductosService {
     });
   }
 
+  /**
+   * Elimina el producto si nunca se ha vendido. Si tiene ventas asociadas no
+   * se puede borrar sin romper el historial, así que se desactiva.
+   */
+  async remove(id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const producto = await tx.producto.findUnique({ where: { id } });
+      if (!producto) {
+        throw new NotFoundException(`Producto ${id} no encontrado`);
+      }
+
+      const ventas = await tx.ventaItem.count({ where: { productoId: id } });
+      if (ventas > 0) {
+        await tx.producto.update({ where: { id }, data: { activo: false } });
+        return { accion: 'desactivado' as const };
+      }
+
+      await tx.movimientoStock.deleteMany({ where: { productoId: id } });
+      await tx.producto.delete({ where: { id } });
+      return { accion: 'eliminado' as const };
+    });
+  }
+
   private async findOneOrThrow(id: string) {
     const producto = await this.prisma.producto.findUnique({ where: { id } });
     if (!producto) {

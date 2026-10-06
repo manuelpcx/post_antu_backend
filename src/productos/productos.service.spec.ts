@@ -14,8 +14,12 @@ describe('ProductosService', () => {
         create: jest.fn(),
         update: jest.fn(),
         findUnique: jest.fn(),
+        delete: jest.fn(),
       },
+      ventaItem: { count: jest.fn() },
+      movimientoStock: { deleteMany: jest.fn() },
     };
+    prisma.$transaction = jest.fn((fn: any) => fn(prisma));
 
     const module = await Test.createTestingModule({
       providers: [
@@ -96,6 +100,41 @@ describe('ProductosService', () => {
       expect(prisma.producto.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ precio: undefined }) }),
       );
+    });
+  });
+
+  describe('remove', () => {
+    it('elimina el producto y sus movimientos si no tiene ventas', async () => {
+      prisma.producto.findUnique.mockResolvedValue({ id: 'p1' });
+      prisma.ventaItem.count.mockResolvedValue(0);
+
+      const result = await service.remove('p1');
+
+      expect(result).toEqual({ accion: 'eliminado' });
+      expect(prisma.movimientoStock.deleteMany).toHaveBeenCalledWith({
+        where: { productoId: 'p1' },
+      });
+      expect(prisma.producto.delete).toHaveBeenCalledWith({ where: { id: 'p1' } });
+    });
+
+    it('desactiva en vez de eliminar si el producto tiene ventas', async () => {
+      prisma.producto.findUnique.mockResolvedValue({ id: 'p1' });
+      prisma.ventaItem.count.mockResolvedValue(3);
+
+      const result = await service.remove('p1');
+
+      expect(result).toEqual({ accion: 'desactivado' });
+      expect(prisma.producto.update).toHaveBeenCalledWith({
+        where: { id: 'p1' },
+        data: { activo: false },
+      });
+      expect(prisma.producto.delete).not.toHaveBeenCalled();
+    });
+
+    it('lanza NotFound si el producto no existe', async () => {
+      prisma.producto.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove('nope')).rejects.toThrow('no encontrado');
     });
   });
 });
