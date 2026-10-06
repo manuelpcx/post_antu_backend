@@ -7,6 +7,7 @@ import { EspeciesModule } from './especies/especies.module';
 import { CategoriasModule } from './categorias/categorias.module';
 import { ProductosModule } from './productos/productos.module';
 import { VentasModule } from './ventas/ventas.module';
+import { AsesorModule } from './asesor/asesor.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { VentasModule } from './ventas/ventas.module';
     CategoriasModule,
     ProductosModule,
     VentasModule,
+    AsesorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
