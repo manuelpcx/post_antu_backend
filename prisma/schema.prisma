@@ -145,3 +145,15 @@ model MovimientoStock {
   @@index([productoId])
   @@map("movimientos_stock")
 }
+
+model ConsejoDiario {
+  id        String   @id @default(cuid())
+  fecha     String   @unique
+  desglose  Json
+  consejo   Json
+  modelo    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("consejos_diarios")
+}
